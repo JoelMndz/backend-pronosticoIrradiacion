@@ -21,7 +21,7 @@ class DatosLogin(BaseModel):
 # Cargar los modelos
 modelo_rl_modulo = joblib.load('modelo_regresion_lineal_modulo.joblib')
 modelo_rl_irradiacion = joblib.load('modelo_regresion_lineal_irradiacion.joblib')
-# modelo_rna = load_model('modelo_rna_v3')
+modelo_rna = load_model('modelo_rna_v3')
 app = FastAPI()
 
 app.add_middleware(
@@ -53,7 +53,7 @@ def pronostico_irradiacion(body: DatosEntrada):
 
 @app.post("/api/pronostico-rna-irradiacion")
 def pronostico_rna_irradiacion(body: DatosEntrada):
-  # irradiacion = modelo_rna.predict([[body.temperatura, body.hora, body.minuto]])[0][0]
+  irradiacion = modelo_rna.predict([[body.temperatura, body.hora, body.minuto]])[0][0]
   db['pronosticos'].insert_one({
     'datos_entrada': {
       'temperatura': body.temperatura,
@@ -61,7 +61,7 @@ def pronostico_rna_irradiacion(body: DatosEntrada):
       'minuto': body.minuto
     },
     'modelo': 'redes neuronales',
-    'irradiacion': 0,#round(float(irradiacion),2),
+    'irradiacion': round(float(irradiacion),2),
     'fecha': datetime.datetime.now()
   })
   proximos = []
@@ -73,11 +73,11 @@ def pronostico_rna_irradiacion(body: DatosEntrada):
     proximos.append({
       'hora':body.hora,
       'minuto': body.minuto,
-      'irradiacion':0# round(float(modelo_rna.predict([[body.temperatura, body.hora, body.minuto]])[0][0]),2)
+      'irradiacion': round(float(modelo_rna.predict([[body.temperatura, body.hora, body.minuto]])[0][0]),2)
     })
 
   return {
-    "irradiacion": 0,# round(float(irradiacion),2),
+    "irradiacion": round(float(irradiacion),2),
     'proximos': proximos  
   }
 
