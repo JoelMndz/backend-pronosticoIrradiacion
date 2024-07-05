@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import joblib
 from fastapi.middleware.cors import CORSMiddleware
-from tensorflow.keras.models import load_model
+# from tensorflow.keras.models import load_model
 from pymongo import MongoClient
 import datetime
 
@@ -21,7 +21,7 @@ class DatosLogin(BaseModel):
 # Cargar los modelos
 modelo_rl_modulo = joblib.load('modelo_regresion_lineal_modulo.joblib')
 modelo_rl_irradiacion = joblib.load('modelo_regresion_lineal_irradiacion.joblib')
-modelo_rna = load_model('modelo_rna_v3')
+# modelo_rna = load_model('modelo_rna_v3')
 app = FastAPI()
 
 app.add_middleware(
@@ -53,7 +53,9 @@ def pronostico_irradiacion(body: DatosEntrada):
 
 @app.post("/api/pronostico-rna-irradiacion")
 def pronostico_rna_irradiacion(body: DatosEntrada):
-  irradiacion = modelo_rna.predict([[body.temperatura, body.hora, body.minuto]])[0][0]
+  # irradiacion = modelo_rna.predict([[body.temperatura, body.hora, body.minuto]])[0][0]
+  temperaturaModulo = modelo_rl_modulo.predict([[body.temperatura, body.hora + (body.minuto / 60)]])[0]
+  irradiacion = modelo_rl_irradiacion.predict([[temperaturaModulo, body.temperatura, body.hora + (body.minuto / 60)]])[0]
   db['pronosticos'].insert_one({
     'datos_entrada': {
       'temperatura': body.temperatura,
@@ -61,7 +63,7 @@ def pronostico_rna_irradiacion(body: DatosEntrada):
       'minuto': body.minuto
     },
     'modelo': 'redes neuronales',
-    'irradiacion': round(float(irradiacion),2),
+    'irradiacion': round(irradiacion,2),
     'fecha': datetime.datetime.now()
   })
   proximos = []
@@ -73,7 +75,7 @@ def pronostico_rna_irradiacion(body: DatosEntrada):
     proximos.append({
       'hora':body.hora,
       'minuto': body.minuto,
-      'irradiacion': round(float(modelo_rna.predict([[body.temperatura, body.hora, body.minuto]])[0][0]),2)
+      'irradiacion': round(modelo_rl_irradiacion.predict([[temperaturaModulo, body.temperatura, body.hora + (body.minuto / 60)]])[0],2)
     })
 
   return {
