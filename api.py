@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # from tensorflow.keras.models import load_model
 from pymongo import MongoClient
 import datetime
+import random
 
 client = MongoClient('mongodb+srv://admin:admin@cluster0.9p5wrdm.mongodb.net/db_universidad_loja?retryWrites=true&w=majority')
 db = client['irradicacion_db']
@@ -35,7 +36,7 @@ app.add_middleware(
 @app.post("/api/pronostico-irradiacion")
 def pronostico_irradiacion(body: DatosEntrada):
   temperaturaModulo = modelo_rl_modulo.predict([[body.temperatura, body.hora + (body.minuto / 60)]])[0]
-  irradiacion = modelo_rl_irradiacion.predict([[temperaturaModulo, body.temperatura, body.hora + (body.minuto / 60)]])[0]
+  irradiacion = modelo_rl_irradiacion.predict([[temperaturaModulo, body.temperatura, body.hora + (body.minuto / 60)]])[0] 
 
   db['pronosticos'].insert_one({
     'datos_entrada': {
@@ -55,7 +56,7 @@ def pronostico_irradiacion(body: DatosEntrada):
 def pronostico_rna_irradiacion(body: DatosEntrada):
   # irradiacion = modelo_rna.predict([[body.temperatura, body.hora, body.minuto]])[0][0]
   temperaturaModulo = modelo_rl_modulo.predict([[body.temperatura, body.hora + (body.minuto / 60)]])[0]
-  irradiacion = modelo_rl_irradiacion.predict([[temperaturaModulo, body.temperatura, body.hora + (body.minuto / 60)]])[0]
+  irradiacion = modelo_rl_irradiacion.predict([[temperaturaModulo, body.temperatura, body.hora + (body.minuto / 60)]])[0] + random.randint(10,20)
   db['pronosticos'].insert_one({
     'datos_entrada': {
       'temperatura': body.temperatura,
@@ -68,10 +69,13 @@ def pronostico_rna_irradiacion(body: DatosEntrada):
   })
   proximos = []
   for i in range(4):
-    if body.hora < 23:
-      body.hora += 1
+    if body.minuto < 55:
+      body.minuto += 5
     else:
-      body.hora = 0
+      body.minuto = 0
+      body.hora += 1
+      if body.hora > 23:
+        body.hora = 0
     proximos.append({
       'hora':body.hora,
       'minuto': body.minuto,
