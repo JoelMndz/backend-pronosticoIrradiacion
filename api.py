@@ -58,6 +58,7 @@ def pronostico_rna_irradiacion(body: DatosEntrada):
   temperaturaModulo = modelo_rl_modulo.predict([[body.temperatura, body.hora + (body.minuto / 60)]])[0]
   irradiacion = modelo_rl_irradiacion.predict([[temperaturaModulo, body.temperatura, body.hora + (body.minuto / 60)]])[0] + random.randint(10,20)
   irradiacion = irradiacion if irradiacion > 0 else 0
+  irradicacionIngresada = irradiacion
   db['pronosticos'].insert_one({
     'datos_entrada': {
       'temperatura': body.temperatura,
@@ -86,7 +87,7 @@ def pronostico_rna_irradiacion(body: DatosEntrada):
     })
 
   return {
-    "irradiacion": round(float(irradiacion),2),
+    "irradiacion": round(float(irradicacionIngresada),2),
     'proximos': proximos  
   }
 
