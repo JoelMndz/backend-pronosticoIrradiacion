@@ -36,7 +36,7 @@ app.add_middleware(
 @app.post("/api/pronostico-irradiacion")
 def pronostico_irradiacion(body: DatosEntrada):
   temperaturaModulo = modelo_rl_modulo.predict([[body.temperatura, body.hora + (body.minuto / 60)]])[0]
-  irradiacion = modelo_rl_irradiacion.predict([[temperaturaModulo, body.temperatura, body.hora + (body.minuto / 60)]])[0] 
+  irradiacion = modelo_rl_irradiacion.predict([[temperaturaModulo, body.hora + (body.minuto / 60)]])[0] 
   irradiacion = irradiacion if irradiacion > 0 else 0
   db['pronosticos'].insert_one({
     'datos_entrada': {
@@ -56,7 +56,7 @@ def pronostico_irradiacion(body: DatosEntrada):
 def pronostico_rna_irradiacion(body: DatosEntrada):
   # irradiacion = modelo_rna.predict([[body.temperatura, body.hora, body.minuto]])[0][0]
   temperaturaModulo = modelo_rl_modulo.predict([[body.temperatura, body.hora + (body.minuto / 60)]])[0]
-  irradiacion = modelo_rl_irradiacion.predict([[temperaturaModulo, body.temperatura, body.hora + (body.minuto / 60)]])[0] + random.randint(10,20)
+  irradiacion = modelo_rl_irradiacion.predict([[temperaturaModulo, body.hora + (body.minuto / 60)]])[0] + random.randint(10,20)
   irradiacion = irradiacion if irradiacion > 0 else 0
   irradicacionIngresada = irradiacion
   db['pronosticos'].insert_one({
@@ -78,7 +78,7 @@ def pronostico_rna_irradiacion(body: DatosEntrada):
       body.hora += 1
       if body.hora > 23:
         body.hora = 0
-    irradiacion = round(modelo_rl_irradiacion.predict([[temperaturaModulo, body.temperatura, body.hora + (body.minuto / 60)]])[0],2)
+    irradiacion = round(modelo_rl_irradiacion.predict([[temperaturaModulo, body.hora + (body.minuto / 60)]])[0],2)
     irradiacion = irradiacion if irradiacion > 0 else 0
     proximos.append({
       'hora':body.hora,
